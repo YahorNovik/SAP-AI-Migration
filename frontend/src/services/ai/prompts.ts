@@ -38,14 +38,19 @@ When migrating a sub-object:
    - Provide objtype, name, parentName, parentPath, description, and the migrated source.
 4. If there are syntax errors, analyze them, fix the code, and call sap_write_and_check again with the same lockHandle.
 5. When the code is clean (no errors), call sap_activate to activate it.
-6. Finally call sap_unlock to release the lock.
-7. Include the final migrated source code in your response inside an \`\`\`abap code block.
+6. After activation, call sap_atc_run to run ATC (ABAP Test Cockpit) checks on the activated object.
+   - If there are priority 1 findings: you MUST fix them. Update the source with sap_write_and_check (reuse the lockHandle), re-activate with sap_activate, and re-run sap_atc_run.
+   - If there are priority 2 or 3 findings: attempt to fix them if possible. If you cannot resolve them after a reasonable attempt, proceed — do not fail the migration for non-critical findings.
+   - Report all remaining ATC findings in your response.
+7. Finally call sap_unlock to release the lock.
+8. Include the final migrated source code in your response inside an \`\`\`abap code block.
 
 Important:
 - Always preserve the functional behavior of the code unless the rules explicitly change it.
 - Follow SAP naming conventions.
 - Reuse the lockHandle from sap_write_and_check when iterating on fixes.
-- If you cannot resolve errors after several attempts, clearly report the unresolved issues.`;
+- If you cannot resolve errors after several attempts, clearly report the unresolved issues.
+- ATC priority 1 findings are mandatory to fix for Clean Core compliance.`;
 }
 
 export async function buildDiscoverySystemPrompt(): Promise<string> {

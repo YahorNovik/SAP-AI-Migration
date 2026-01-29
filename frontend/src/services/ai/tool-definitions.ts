@@ -157,5 +157,30 @@ export function createSapTools(systemId: string) {
       execute: async (args) =>
         mcpClientManager.callTool(systemId, "sap_node_contents", args),
     }),
+
+    sap_atc_run: tool({
+      description:
+        "Run ATC (ABAP Test Cockpit) checks on an activated object. " +
+        "Returns findings with priorities. Priority 1 must be fixed; priority 2-3 should be fixed if possible.",
+      inputSchema: z.object({
+        objectUrl: z
+          .string()
+          .describe(
+            "ADT URI of the object to check (e.g. /sap/bc/adt/programs/programs/zmy_report)"
+          ),
+        variant: z
+          .string()
+          .optional()
+          .describe(
+            "ATC check variant to use. Defaults to 'DEFAULT'."
+          ),
+        maxResults: z
+          .number()
+          .optional()
+          .describe("Maximum number of findings to return (default 100)"),
+      }),
+      execute: async (args) =>
+        mcpClientManager.callTool(systemId, "sap_atc_run", args),
+    }),
   };
 }

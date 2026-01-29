@@ -76,7 +76,7 @@ Original source code:
 ${sub.originalSource}
 \`\`\`
 
-Apply the migration rules, write the code using sap_write_and_check, fix any syntax errors, activate with sap_activate, and unlock with sap_unlock.
+Apply the migration rules, write the code using sap_write_and_check, fix any syntax errors, activate with sap_activate, run ATC checks with sap_atc_run (fix all priority 1 findings, attempt priority 2-3), and unlock with sap_unlock.
 Include the final migrated source code in your response inside an \`\`\`abap code block.`;
 
     const result = await generateText({
@@ -144,6 +144,8 @@ function summarizeArgs(toolName: string, args: Record<string, unknown>): string 
       return `Activating ${args.objectName as string ?? "object"}`;
     case "sap_unlock":
       return "Releasing lock";
+    case "sap_atc_run":
+      return `Running ATC checks on ${args.objectUrl as string ?? "object"}`;
     case "sap_get_source":
       return `Reading source from ${args.objectSourceUrl as string ?? ""}`;
     default:

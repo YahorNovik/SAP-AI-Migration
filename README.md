@@ -34,7 +34,7 @@ AI-powered platform for automated ABAP code migration between SAP systems using 
                        │ stdio
 ┌──────────────────────┼──────────────────────────────────┐
 │              MCP Server (sap-adt-mcp-server)            │
-│          26 SAP ADT Tools across 9 categories           │
+│         28 SAP ADT Tools across 10 categories           │
 │                                                         │
 │  ┌──────────────────────────────────────────────────┐   │
 │  │              abap-adt-api (v7)                    │   │
@@ -60,7 +60,8 @@ AI-powered platform for automated ABAP code migration between SAP systems using 
 - **Two-level topological ordering** -- inter-object ordering (interfaces before classes, base before subclass) and intra-object ordering (includes before programs) using Kahn's algorithm
 - **Target system existence check with auto-exclusion** -- searches the target system for each dependency and auto-excludes objects that already exist
 - **Manual sub-object exclude/include** -- toggle individual sub-objects in or out of the migration scope
-- **AI agentic migration loop** -- per sub-object write-check-fix-activate cycle: the LLM writes migrated source, runs syntax check, fixes errors, and activates, all through SAP ADT tool calls
+- **AI agentic migration loop** -- per sub-object write-check-fix-activate-ATC cycle: the LLM writes migrated source, runs syntax check, fixes errors, activates, and runs ATC checks for Clean Core compliance, all through SAP ADT tool calls
+- **ATC (ABAP Test Cockpit) checks** -- after activation, ATC checks are run automatically; priority 1 findings must be fixed, priority 2-3 are fixed when possible
 - **Real-time SSE progress** -- Server-Sent Events stream every tool call, syntax check result, activation, and error to the browser in real time
 - **Monaco code editor** -- side-by-side original/migrated source view with ABAP syntax highlighting
 - **Multi-provider LLM support** -- Anthropic Claude, OpenAI GPT, Google Gemini, and Mistral via the Vercel AI SDK
@@ -68,7 +69,7 @@ AI-powered platform for automated ABAP code migration between SAP systems using 
 
 ## SAP ADT Tools
 
-The MCP server exposes **26 tools** organized into **9 categories**:
+The MCP server exposes **28 tools** organized into **10 categories**:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -80,6 +81,7 @@ The MCP server exposes **26 tools** organized into **9 categories**:
 | **Activation** (2) | `sap_activate`, `sap_inactive_objects` | Activate objects, list inactive |
 | **Transport** (4) | `sap_transport_info`, `sap_create_transport`, `sap_release_transport`, `sap_user_transports` | Transport request management |
 | **Code Analysis** (4) | `sap_syntax_check`, `sap_code_completion`, `sap_find_definition`, `sap_usage_references` | Syntax check, code intel, where-used |
+| **ATC** (2) | `sap_atc_run`, `sap_atc_customizing` | Run ATC checks, get check configuration |
 | **Workflow** (1) | `sap_write_and_check` | Composite: check existence, lock, write, syntax check |
 
 ## Tech Stack
@@ -221,6 +223,8 @@ For each non-excluded sub-object, in dependency order:
    - It calls `sap_write_and_check` to write the migrated source and run a syntax check
    - If syntax errors are returned, the LLM fixes the code and retries with the same lock handle
    - Once clean, it calls `sap_activate` to activate the object
+   - After activation, it calls `sap_atc_run` to run ATC (ABAP Test Cockpit) checks for Clean Core compliance
+   - Priority 1 ATC findings must be fixed (re-write, re-activate, re-check); priority 2-3 are fixed when possible
    - Finally, `sap_unlock` releases the lock
 
 3. **Persist results** -- The migrated source and status are saved to the database. Every tool call and result is logged as an `ActivityLog` entry and streamed to the browser via SSE.
@@ -244,8 +248,13 @@ objects         ▼                      │    │ errors? │       │
  (repeat)      │                       │    ▼    │  ▼         │
                ▼                       │  Fix &  │ Activate   │
            Auto-exclude                │  retry  │    │       │
-           existing                    │         │  Unlock    │
-                                       └─────────┘    │       │
+           existing                    │         │ ATC check  │
+                                       │         │    │       │
+                                       │         │ P1 found?  │
+                                       │         │  Yes → Fix │
+                                       │         │  No ──┐    │
+                                       └─────────┘  Unlock    │
+                                                      │       │
                                                       ▼       │
                                                    Persist    │
                                                    + SSE      │
@@ -262,7 +271,7 @@ SAPAIMigration/
 │   ├── config.ts                     # SAP configuration loader
 │   ├── client-manager.ts             # abap-adt-api client lifecycle
 │   ├── errors.ts                     # Error types
-│   └── handlers/                     # SAP ADT tool handlers (9 files)
+│   └── handlers/                     # SAP ADT tool handlers (10 files)
 │       ├── base-handler.ts           # Abstract base with registerTool
 │       ├── auth-handler.ts           # login, logout, drop_session
 │       ├── search-handler.ts         # search, node_contents, structure, path, types
@@ -272,6 +281,7 @@ SAPAIMigration/
 │       ├── activation-handler.ts     # activate, inactive_objects
 │       ├── transport-handler.ts      # transport_info, create, release, user_transports
 │       ├── code-analysis-handler.ts  # syntax_check, completion, definition, references
+│       ├── atc-handler.ts            # atc_run, atc_customizing (Clean Core)
 │       └── workflow-handler.ts       # write_and_check (composite)
 ├── build/                            # Compiled JS output
 ├── frontend/                         # Next.js application

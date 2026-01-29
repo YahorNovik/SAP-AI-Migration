@@ -11,6 +11,7 @@ import { ActivationHandler } from "./handlers/activation-handler.js";
 import { TransportHandler } from "./handlers/transport-handler.js";
 import { CodeAnalysisHandler } from "./handlers/code-analysis-handler.js";
 import { WorkflowHandler } from "./handlers/workflow-handler.js";
+import { AtcHandler } from "./handlers/atc-handler.js";
 
 export class SapAdtMcpServer {
   readonly mcpServer: McpServer;
@@ -34,5 +35,6 @@ export class SapAdtMcpServer {
     new TransportHandler(this.mcpServer, this.clientManager);
     new CodeAnalysisHandler(this.mcpServer, this.clientManager);
     new WorkflowHandler(this.mcpServer, this.clientManager);
+    new AtcHandler(this.mcpServer, this.clientManager);
   }
 }

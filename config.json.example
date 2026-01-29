@@ -1,0 +1,8 @@
+{
+  "url": "https://your-sap-server:44300",
+  "user": "YOUR_USER",
+  "password": "YOUR_PASSWORD",
+  "client": "001",
+  "language": "EN",
+  "allowUnauthorizedCerts": false
+}

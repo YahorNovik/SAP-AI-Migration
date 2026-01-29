@@ -10,7 +10,12 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "frontend:start": "npm --prefix frontend run start",
+    "frontend:db:push": "npm --prefix frontend run db:push",
+    "frontend:db:seed": "npm --prefix frontend run db:seed"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",

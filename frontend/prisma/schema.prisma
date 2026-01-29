@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model SapSystem {
+  id                     String    @id @default(cuid())
+  name                   String    @unique
+  url                    String
+  user                   String
+  password               String
+  client                 String    @default("")
+  language               String    @default("EN")
+  allowUnauthorizedCerts Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  sourceProjects Project[] @relation("SourceSystem")
+  targetProjects Project[] @relation("TargetSystem")
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  objtype        String
+  parentName     String
+  parentPath     String
+  description    String   @default("")
+  transport      String?
+  status         String   @default("open")
+  migrationRules String   @default("")
+  sourceSystemId String?
+  targetSystemId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sourceSystem SapSystem? @relation("SourceSystem", fields: [sourceSystemId], references: [id])
+  targetSystem SapSystem? @relation("TargetSystem", fields: [targetSystemId], references: [id])
+  subObjects   SubObject[]
+  activityLogs ActivityLog[]
+}
+
+model SubObject {
+  id               String  @id @default(cuid())
+  projectId        String
+  name             String
+  objtype          String
+  sourceUrl        String  @default("")
+  objectUrl        String  @default("")
+  originalSource   String  @default("")
+  migratedSource   String  @default("")
+  status           String  @default("pending")
+  order            Int     @default(0)
+  dependsOn        String?
+  parentObjectName String  @default("")
+  parentObjectType String  @default("")
+  objectOrder      Int     @default(0)
+  excluded         Boolean @default(false)
+
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  activityLogs ActivityLog[]
+
+  @@index([projectId])
+  @@index([projectId, parentObjectName])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  projectId   String
+  subObjectId String?
+  type        String
+  content     String
+  timestamp   DateTime @default(now())
+
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  subObject SubObject? @relation(fields: [subObjectId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([subObjectId])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @default("")
+  updatedAt DateTime @updatedAt
+}

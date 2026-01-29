@@ -7,3 +7,6 @@ config.json
 .sap-adt-config.json
 .env
 .DS_Store
+frontend/.next/
+frontend/**/*.db
+frontend/**/*.db-journal

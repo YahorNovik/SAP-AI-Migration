@@ -4,7 +4,7 @@ import type * as Monaco from "monaco-editor";
 
 /**
  * Register ABAP language support with the given Monaco instance.
- * Extracts the previously-duplicated Monarch tokenizer into a single shared location.
+ * Pure Monarch tokenizer — no external dependencies.
  */
 export function registerAbapLanguage(monaco: typeof Monaco): void {
   if (monaco.languages.getLanguages().some((l) => l.id === "abap")) {
@@ -30,44 +30,4 @@ export function registerAbapLanguage(monaco: typeof Monaco): void {
       ],
     },
   });
-}
-
-/**
- * Enable abaplint-powered diagnostics on a Monaco editor model.
- * Lazily loads @abaplint/core (large bundle) on first call.
- * Fire-and-forget — failures are silently ignored.
- */
-export async function enableAbapDiagnostics(
-  monaco: typeof Monaco,
-  model: Monaco.editor.ITextModel,
-): Promise<void> {
-  try {
-    const { Registry, MemoryFile, LanguageServer } = await import("@abaplint/core");
-
-    const reg = new Registry();
-    const filename = "source.prog.abap";
-    reg.addFile(new MemoryFile(filename, model.getValue()));
-    await reg.parseAsync();
-
-    const ls = new LanguageServer(reg);
-    const diagnostics = ls.diagnostics({ uri: filename });
-
-    const markers: Monaco.editor.IMarkerData[] = diagnostics.map((d) => ({
-      severity:
-        d.severity === 1
-          ? monaco.MarkerSeverity.Error
-          : d.severity === 2
-            ? monaco.MarkerSeverity.Warning
-            : monaco.MarkerSeverity.Info,
-      message: d.message,
-      startLineNumber: d.range.start.line + 1,
-      startColumn: d.range.start.character + 1,
-      endLineNumber: d.range.end.line + 1,
-      endColumn: d.range.end.character + 1,
-    }));
-
-    monaco.editor.setModelMarkers(model, "abaplint", markers);
-  } catch {
-    // Silently fail — diagnostics are an optional enhancement
-  }
 }

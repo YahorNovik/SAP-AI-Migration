@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Server, Brain } from "lucide-react";
+import { ArrowLeft, Plus, Server, Brain, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -160,9 +160,17 @@ export function SettingsLayout() {
                 />
               </div>
             </div>
+          </div>
+        </section>
 
+        {/* Global Migration Rules */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <ScrollText size={20} className="text-amber-600" />
+            <h2 className="text-lg font-semibold">Global Migration Rules</h2>
+          </div>
+          <div className="bg-white border rounded-lg p-6 space-y-4">
             <div className="space-y-2">
-              <Label>Global Migration Rules</Label>
               <Textarea
                 value={globalMigrationRules}
                 onChange={(e) => setGlobalMigrationRules(e.target.value)}
@@ -170,7 +178,7 @@ export function SettingsLayout() {
                 rows={4}
               />
               <p className="text-xs text-muted-foreground">
-                These rules are injected into the migration agent's system
+                These rules are injected into the migration agent&apos;s system
                 prompt for every project. Per-project rules can override or
                 extend them.
               </p>
@@ -181,7 +189,7 @@ export function SettingsLayout() {
                 onClick={handleSaveAiSettings}
                 disabled={aiSaving || !llmProvider}
               >
-                {aiSaving ? "Saving..." : "Save AI Settings"}
+                {aiSaving ? "Saving..." : "Save Settings"}
               </Button>
               {aiSaved && (
                 <span className="text-sm text-green-600">Saved</span>
